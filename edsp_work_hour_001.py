@@ -2,16 +2,23 @@ import streamlit as st
 from datetime import datetime, time
 import pandas as pd
 import os
+from azure.storage.blob import BlobServiceClient
+from dotenv import load_dotenv
+
+# .envファイルを読み込む（ローカル環境のみ有効）
+load_dotenv()
+
+# 環境変数から接続文字列を取得
+connect_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+
+# Blobサービスクライアントの初期化
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
 # セッションステートの初期化
 if 'employee_id' not in st.session_state:
     st.session_state.employee_id = ""
 if 'department' not in st.session_state:
     st.session_state.department = ""
-
-# 保存先のディレクトリ
-save_path = '/Users/shigeokuwabara/Desktop/python_coding/work_hour_data'
-os.makedirs(save_path, exist_ok=True)  # ディレクトリが存在しない場合、作成
 
 st.title("お疲れさま！退社前に今日の仕事を振り返りましょう😊")
 
@@ -63,10 +70,27 @@ if st.button("保存"):
     }
     df = pd.DataFrame(data)
     
+    # CSVデータを文字列として保存
+    csv_data = df.to_csv(index=False)
+
     # ファイル名を社員番号と日にちで作成
-    file_name = f"{save_path}/work_hour_data_{st.session_state.employee_id}_{selected_date}.csv"
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    blob_name = f"work_hour_data_{st.session_state.employee_id}_{selected_date}_{timestamp}.csv"
     
-    # CSVファイルとして保存
-    df.to_csv(file_name, index=False)
-    
-    st.success(f"データが保存されました！ファイル名: {file_name}")
+    # Blob Storageにアップロードする関数
+    def upload_to_blob(csv_data, blob_name, container_name="work-hour-date"):
+        """Azure Blob StorageにCSVデータをアップロードする関数"""
+        try:
+            # コンテナクライアントを取得
+            container_client = blob_service_client.get_container_client(container_name)
+            
+            # Blobをアップロード
+            blob_client = container_client.get_blob_client(blob_name)
+            blob_client.upload_blob(csv_data, overwrite=True)
+            st.success(f"データが保存されました！ファイル名: {blob_name}")
+        
+        except Exception as e:
+            st.error(f"エラーが発生しました: {e}")
+
+    # アップロード関数の呼び出し
+    upload_to_blob(csv_data, blob_name)
