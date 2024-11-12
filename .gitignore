@@ -1,17 +1,17 @@
 # Python関連のファイル
-__pycache__/        # Pythonのキャッシュディレクトリ
-*.pyc               # コンパイル済みのPythonファイル
+__pycache__/
+*.pyc
 
 # 環境ファイル
-.env                # 環境変数ファイル
+.env
 
 # OSによる一時ファイル
-.DS_Store           # macOSのシステムファイル
-Thumbs.db           # Windowsのシステムファイル
+.DS_Store
+Thumbs.db
 
 # IDE関連の設定ファイル
-.vscode/            # VS Codeの設定ディレクトリ
-.idea/              # PyCharmやIntelliJ IDEAの設定ディレクトリ
+.vscode/
+.idea/
 
 # その他の無視するファイル
-*.log               # ログファイル
+*.log
